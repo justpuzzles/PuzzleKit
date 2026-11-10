@@ -32,6 +32,9 @@ public final class TodayClock {
             observers = ObserverBag(center: center, names: [
                 .NSCalendarDayChanged, .NSSystemTimeZoneDidChange, .NSSystemClockDidChange,
             ]) { [weak self] in
+                // Drop Foundation's cached zone first, so a calendar built from
+                // `.current` (a game's own, or a test's) sees the new one too.
+                NSTimeZone.resetSystemTimeZone()
                 MainActor.assumeIsolated { self?.refresh() }
             }
         }

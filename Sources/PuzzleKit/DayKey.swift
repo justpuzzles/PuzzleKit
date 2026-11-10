@@ -21,10 +21,13 @@ public struct DayKey: Hashable, Codable, Sendable, Comparable, CustomStringConve
         self.day = day
     }
 
-    /// Gregorian in the device's current time zone.
+    /// Gregorian in the device's current time zone. `autoupdatingCurrent`,
+    /// not `.current`: Foundation caches `.current` until
+    /// `resetSystemTimeZone()`, so after a flight with the app open the day
+    /// would still turn over at the old zone's midnight.
     public static var localCalendar: Calendar {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = .current
+        calendar.timeZone = .autoupdatingCurrent
         return calendar
     }
 
