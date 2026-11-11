@@ -31,4 +31,14 @@ struct DailyShareTests {
                                timeText: "0:10", streak: 0)
         #expect(share.dayText(locale: Locale(identifier: "en_US")) == "Jan 1, 2026")
     }
+
+    /// The share text is English while the app is, so its date is too: a
+    /// German or Arabic region must not put "11. Nov." or Arabic digits
+    /// into an English line.
+    @Test func theDefaultDateFollowsTheAppLanguageNotTheRegion() {
+        let share = DailyShare(game: "G", day: day, timeText: "0:10", streak: 0)
+        #expect(DailyShare.appLocale.language.languageCode == .english)
+        #expect(share.dayText() == "Nov 10, 2026")
+        #expect(share.dayText(locale: Locale(identifier: "ar_EG")) != "Nov 10, 2026")
+    }
 }

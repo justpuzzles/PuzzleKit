@@ -67,4 +67,28 @@ struct DailyRecordTests {
         #expect(record.completedTimes.isEmpty)
         #expect(record.lastCompleted == nil)
     }
+
+    /// Clock set ahead to Dec 1 and that daily solved: once the clock is
+    /// back, today's solve starts a streak instead of counting as late.
+    @Test func aDailySolvedUnderAClockSetAheadDoesNotFreezeTheStreak() {
+        var record = DailyRecord()
+        let december = DayKey(year: 2026, month: 12, day: 1)
+        #expect(record.record(day: december, time: 30, today: december) == .counted(streak: 1))
+        #expect(record.record(day: mon, time: 60, today: mon) == .counted(streak: 1))
+        #expect(record.record(day: tue, time: 50, today: tue) == .counted(streak: 2))
+        #expect(record.displayStreak(today: tue) == 2)
+        // The future day's time is kept: replaying it later records nothing.
+        #expect(record.time(for: december) == 30)
+    }
+
+    /// Flying west across the date line: today goes back a day. The streak
+    /// that ended on "tomorrow" must survive.
+    @Test func oneDayAheadIsTheDateLineNotAWrongClock() {
+        var record = DailyRecord()
+        record.record(day: tue, time: 60, today: tue)
+        record.record(day: wed, time: 60, today: wed)
+        #expect(record.record(day: tue.previous(), time: 70, today: tue) == .late)
+        #expect(record.currentStreak == 2)
+        #expect(record.lastCompleted == wed)
+    }
 }

@@ -87,12 +87,24 @@ public struct DailyRecord: Codable, Equatable, Sendable {
     /// Records a solved daily. Idempotent per day: a replay changes nothing.
     /// The streak increments on consecutive days and restarts at 1 after a
     /// gap; `lastCompleted` only moves forward.
+    ///
+    /// `today` guards against a clock that was set ahead. A daily solved on a
+    /// future date would otherwise stay `lastCompleted`, and every real solve
+    /// until that date would count as `.late`, holding the streak at 0. A
+    /// `lastCompleted` more than one day after `today` is therefore dropped
+    /// (its time is kept). One day of slack, because flying west across the
+    /// date line moves `today` back a day legitimately.
     @discardableResult
-    public mutating func record(day: DayKey, time: TimeInterval) -> DailyOutcome {
+    public mutating func record(day: DayKey, time: TimeInterval,
+                                today: DayKey = DayKey(date: Date())) -> DailyOutcome {
         if let first = completedTimes[day.isoString] {
             return .replay(firstTime: first)
         }
         completedTimes[day.isoString] = time
+        if let last = lastCompleted, today.days(until: last) > 1 {
+            lastCompleted = nil
+            currentStreak = 0
+        }
         if let last = lastCompleted, !(last < day) {
             return .late
         }

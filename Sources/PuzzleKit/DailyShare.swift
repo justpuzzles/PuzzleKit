@@ -27,9 +27,17 @@ public struct DailyShare: Equatable, Sendable {
         self.url = url
     }
 
-    /// The day as the player's locale writes it, on the Gregorian calendar
+    /// The language the app is shown in: the first of its own localizations
+    /// that the player prefers. The share text is in that language, so the
+    /// date must be too; the phone's region alone gave an English line a
+    /// German, Japanese or Arabic-digit date.
+    public static var appLocale: Locale {
+        Locale(identifier: Bundle.main.preferredLocalizations.first ?? "en")
+    }
+
+    /// The day as the app's language writes it, on the Gregorian calendar
     /// that the day key itself uses.
-    public func dayText(locale: Locale = .current) -> String {
+    public func dayText(locale: Locale = DailyShare.appLocale) -> String {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(identifier: "UTC") ?? .current
         let date = day.date(calendar: calendar)
@@ -39,7 +47,7 @@ public struct DailyShare: Equatable, Sendable {
         return date.formatted(style)
     }
 
-    public func text(locale: Locale = .current) -> String {
+    public func text(locale: Locale = DailyShare.appLocale) -> String {
         var lines = ["\(game) · Daily · \(dayText(locale: locale))"]
         lines.append(["Solved in \(timeText)", detail].compactMap { $0 }.joined(separator: " · "))
         if streak > 1 {
